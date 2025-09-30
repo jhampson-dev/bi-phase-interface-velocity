@@ -2,20 +2,23 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import brentq
 
-# ----- This script allows for finding the interface location of a bi-phase immiscible laminar flow, the velocity profile of the bi-phase flow and 
+# ----- This script allows for finding the interface location of a bi-phase immiscible laminar flow, the velocity profile of the bi-phase flow.
+# ----- Units are dimensionless (be careful with your consistency!)
 
 # Parameters
 # h = 1.0  # Channel half-height  dummy value
-h = float(input("Enter the nromalised half-height of the straight channel in metres (This value can be a floating point number): "))
+h = float(input("Enter the half-height of the straight channel (This value can be a floating point number): "))
 print(h)
 # dpdx = -1.0  # Pressure gradient dummy value
-dpdx = int(input("Enter the pressure gradient driving flow in Pascal (This value can be a floating point number): "))
+dpdx = int(input("Enter the pressure gradient driving flow (This value can be a floating point number): "))
 print(dpdx)
 
-# mu1 = 1.0  # Viscosity bottom phase dummy value
-mu1 = float(input("Input the dynamic viscosity of fluid 1 in Pascal seconds: "))
-# mu2 = 2 * mu1  # Viscosity top phase dummy value
-mu2 = float(input("Input the dynamic viscosity of fluid 2 in Pascal seconds: "))
+# mu1 = 1.0  # Dynamic viscosity bottom phase dummy value
+mu1 = float(input("Input the dynamic viscosity of fluid 1: "))
+# mu2 = 2 * mu1  # Dynamic viscosity top phase dummy value
+mu2 = float(input("Input the dynamic viscosity of fluid 2: ")) 
+print("The viscosity ratio mu1/mu2 is: ", mu1/mu2)
+
 
 # Define the function f(b). The interface height in the channel is b and roots to equation f(b) = 0 are the valid interface positions.
 def f(b, mu1=mu1, mu2=mu2, dpdx=dpdx, h=h):
@@ -35,9 +38,9 @@ def f(b, mu1=mu1, mu2=mu2, dpdx=dpdx, h=h):
 # Root finding - single root in [-h, h].
 # Changed simply from pre-existing MATLAB code. There may be a more Python-y way to do this with scipy.
 b_root = brentq(f, -h, h)
-print("Root b =", b_root)
+print("Root b found at ", b_root,)
 
-# Sampling the function over the interval [-h, h] to find all roots
+# Sampling the function over the interval [-h, h] to find all roots (if more than one exists)
 b_vals = np.linspace(-h, h, 2000)
 f_vals = f(b_vals)
 
@@ -129,7 +132,7 @@ plt.figure(1)
 plt.plot(b_vals, f_vals, label='f(b)')
 plt.axhline(0, color='k', linestyle='--', label='f(b)=0')
 plt.scatter(roots_found, f(roots_found), color='red', s=80, zorder=5, label='Roots')
-plt.xlabel('b')
+plt.xlabel('b, Interface position')
 plt.ylabel('f(b)')
 plt.title('Root finding to identify interface position')
 plt.legend(fontsize=12)
@@ -196,4 +199,3 @@ plt.grid(True)
 plt.gca().tick_params(labelsize=14)
 
 plt.show()
-
