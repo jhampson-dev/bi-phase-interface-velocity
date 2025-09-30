@@ -2,11 +2,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import brentq
 
-# ----- This script allows for finding the interface location of a bi-phase immiscible laminar flow
+# ----- This script allows for finding the interface location of a bi-phase immiscible laminar flow, the velocity profile of the bi-phase flow and 
 
 # Parameters
 # h = 1.0  # Channel half-height  dummy value
-h = float(input("Enter the half-height of the straight channel in metres (This value can be a floating point number): "))
+h = float(input("Enter the nromalised half-height of the straight channel in metres (This value can be a floating point number): "))
 print(h)
 # dpdx = -1.0  # Pressure gradient dummy value
 dpdx = int(input("Enter the pressure gradient driving flow in Pascal (This value can be a floating point number): "))
@@ -17,7 +17,7 @@ mu1 = float(input("Input the dynamic viscosity of fluid 1 in Pascal seconds: "))
 # mu2 = 2 * mu1  # Viscosity top phase dummy value
 mu2 = float(input("Input the dynamic viscosity of fluid 2 in Pascal seconds: "))
 
-# Define the function f(b) = 0 will be the roots sought from the equation that f(b) equals.
+# Define the function f(b). The interface height in the channel is b and roots to equation f(b) = 0 are the valid interface positions.
 def f(b, mu1=mu1, mu2=mu2, dpdx=dpdx, h=h):
     p1 = (1 / (2 * mu1)) * dpdx * (((h + b)**3) / 3 - (h**2) * (h + b))
     
@@ -32,7 +32,8 @@ def f(b, mu1=mu1, mu2=mu2, dpdx=dpdx, h=h):
     
     return p1 + p2 - p3 - p4
 
-# Root finding - single root in [-h, h]
+# Root finding - single root in [-h, h].
+# Changed simply from pre-existing MATLAB code. There may be a more Python-y way to do this with scipy.
 b_root = brentq(f, -h, h)
 print("Root b =", b_root)
 
@@ -45,6 +46,15 @@ root_intervals = []
 for i in range(len(b_vals) - 1):
     if np.sign(f_vals[i]) != np.sign(f_vals[i + 1]):
         root_intervals.append((b_vals[i], b_vals[i + 1]))
+        
+
+# Check if multiple root intervals were found
+if len(root_intervals) == 0:
+    print("No roots found. No bi-phase flow!")
+if len(root_intervals) == 1:
+    print("One root found")
+if len(root_intervals) > 1:
+    print("Multiple roots found! Instability in interface position likely.")
 
 # Root finding with duplicate filtering
 roots_found = []
@@ -89,7 +99,7 @@ def compute_velocity_profile(h, dpdx, mu1, mu2, b):
         0                                                 # stress continuity
     ])
 
-    # Solve linear system for A1, B1, A2, B2
+    # Solve linear system for unknowns A1, B1, A2, B2
     X = np.linalg.solve(M, rhs)
     A1, B1, A2, B2 = X
 
@@ -115,7 +125,7 @@ def compute_velocity_profile(h, dpdx, mu1, mu2, b):
 
 
 # Plotting
-plt.figure(figsize=(10, 6))
+plt.figure(1)
 plt.plot(b_vals, f_vals, label='f(b)')
 plt.axhline(0, color='k', linestyle='--', label='f(b)=0')
 plt.scatter(roots_found, f(roots_found), color='red', s=80, zorder=5, label='Roots')
@@ -124,7 +134,6 @@ plt.ylabel('f(b)')
 plt.title('Root finding to identify interface position')
 plt.legend(fontsize=12)
 plt.grid(True)
-plt.show()
 
 plt.figure(2)
 plt.clf()
@@ -144,8 +153,8 @@ for b in roots_found:
     plt.plot([b, b], [np.min(u), np.max(u)], 'r--')
 
 plt.grid(True)
-plt.xlabel('y')
-plt.ylabel('u(y)')
+plt.xlabel('y, Channel span [-h, +h]')
+plt.ylabel('u(y), fluid velocity')
 plt.title('Velocity profile as a function of y')
 plt.xlim([np.min(y), np.max(y)])
 plt.ylim([np.min(u), np.max(u)])
